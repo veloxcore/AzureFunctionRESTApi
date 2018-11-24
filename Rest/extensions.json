@@ -1,0 +1,9 @@
+{
+  "extensions":[
+    {
+      "name": "Startup",
+      "typeName": "Willezone.Azure.WebJobs.Extensions.DependencyInjection.Startup, Willezone.Azure.WebJobs.Extensions.DependencyInjection, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null"
+    },
+    { "name": "Startup", "typeName":"Rest.Startup, Rest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"}
+  ]
+}

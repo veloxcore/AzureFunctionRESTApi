@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FluentValidation;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Rest.Models
@@ -39,4 +40,6 @@ namespace Rest.Models
         /// </value>
         public string[] Authors { get; set; }
     }
+    
 }
+

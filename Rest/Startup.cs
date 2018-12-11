@@ -7,32 +7,59 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Rest.Models;
 using Rest.Data;
-using Rest.Data.DTO;
-using Rest.Data.Entity;
+using Rest.Model.DTO;
+using Rest.Model.Entity;
 using Rest.Data.Infrastructure;
 using Rest.Data.Repository;
 using System;
 using Willezone.Azure.WebJobs.Extensions.DependencyInjection;
+using Rest.Service;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Rest.Models.Validators;
+using System.Linq;
+using Serilog.Sinks.AzureWebJobsTraceWriter;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.WindowsAzure.Storage;
 
 [assembly: WebJobsStartup(typeof(Rest.Startup))]
 namespace Rest
 {
+    /// <summary>
+    /// Startup class
+    /// </summary>
     internal class Startup : IWebJobsStartup
     {
+        /// <summary>
+        /// Configure Builder
+        /// </summary>
+        /// <param name="Builder">Builder</param>
         public void Configure(IWebJobsBuilder builder)
         {
             builder.AddDependencyInjection<ServiceProviderBuilder>();
         }
 
+        /// <summary>
+        /// Service provider builder
+        /// </summary>
         internal class ServiceProviderBuilder : IServiceProviderBuilder
         {
             private readonly ILoggerFactory _loggerFactory;
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="loggerFactory">LoggerFactory</param>
             public ServiceProviderBuilder(ILoggerFactory loggerFactory)
             {
                 _loggerFactory = loggerFactory;
             }
 
+            /// <summary>
+            /// Build Service and inject dependancy
+            /// </summary>
+            /// <returns>ServiceProvider</returns>
             public IServiceProvider Build()
             {
                 ServiceCollection services = new ServiceCollection();
@@ -43,12 +70,8 @@ namespace Rest
                     .AddEnvironmentVariables()
                     .Build();
 
-                string connectionString = config.GetConnectionString("SqlConnectionString");
-                services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-
-                // Repositories n Data
-                services.AddTransient<IUnitOfWork, UnitOfWork>();
-                services.AddTransient<IBookRepository, BookRepository>();
+                ///Register Dependency of services
+                Service.Startup.RegisterDependency(services, config);
 
                 // Important: We need to call CreateFunctionUserCategory, otherwise our log entries might be filtered out.
                 services.AddSingleton<ILogger>(_ => _loggerFactory.CreateLogger(LogCategories.CreateFunctionUserCategory("Common")));
@@ -67,6 +90,23 @@ namespace Rest
                         .ForMember(o => o.Authors, o => o.MapFrom((a, b) => a.Authors.Split(',')));
                 });
 
+                //FulentValidation
+                services.AddMvc().AddFluentValidation();
+                services.AddTransient<IValidator<Book>, BookValidator>();
+
+                //Application Insights Telemetry
+                string appInsights_InstrumentationKey = config.GetValue<string>("APPINSIGHTS_INSTRUMENTATIONKEY");
+                if (appInsights_InstrumentationKey != null)
+                    LoggerExtensions.telemetry.InstrumentationKey = appInsights_InstrumentationKey;
+             
+                //Register cloudstorageAccount with connection from configuration
+                string azureWebJobsStorageConnection = config.GetValue<string>("AzureWebJobsStorage");
+                services.AddScoped(_ => CloudStorageAccount.Parse(azureWebJobsStorageConnection));
+
+                ///Set Metadata payload Keys
+                string payloadKeys = config.GetValue<string>("Headers");
+                if (!string.IsNullOrEmpty(payloadKeys))
+                    HttpRequestExtensions.PayLoadKeys = payloadKeys.Split(',').ToList();
                 return services.BuildServiceProvider(true);
             }
         }

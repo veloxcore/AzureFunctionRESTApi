@@ -1,10 +1,13 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    //"AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet"
   },
   "ConnectionStrings": {
     "SqlConnectionString": "data source=.\\SQL2016D;Initial Catalog=Books;User ID=sa;Password=P@ssw0rd!!;MultipleActiveResultSets=True;App=EntityFramework;Persist Security Info=True;"
-  }
+  },
+  "Headers": "MethodName,MethodType",
+  "APPINSIGHTS_INSTRUMENTATIONKEY": "bb6d0566-fa86-4d04-a707-88f32a516c5c",
+  "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=restapi1a7b3;AccountKey=J3zacHmeOARBfRxMKpqMTXPCLUMGD10h7w0ksuZnkTXx/I2mgOplgFXsm4jLhe5fdoj6qcqiQ5iVFUNFRdc2gA=="
 }

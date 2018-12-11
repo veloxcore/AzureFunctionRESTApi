@@ -13,10 +13,17 @@ using System.Threading.Tasks;
 
 namespace Rest.Security
 {
+    /// <summary>
+    /// Authentication to processes related to user authentications
+    /// </summary>
     public static class Authentication
     {
         private const string SECRET = "RESTApiAudienceSecret";
 
+        /// <summary>
+        /// Generate Token
+        /// </summary>
+        /// <returns></returns>
         public static string GenerateJWT()
         {
             return new JwtBuilder()
@@ -27,6 +34,11 @@ namespace Rest.Security
                             .Build();
         }
 
+        /// <summary>
+        /// Validate Token
+        /// </summary>
+        /// <param name="value">Authentication Header</param>
+        /// <returns>Token Is valid or not</returns>
         public static bool ValidateToken(AuthenticationHeaderValue value)
         {
             if (value?.Scheme != "Bearer")

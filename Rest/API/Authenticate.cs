@@ -12,8 +12,19 @@ using System.Threading.Tasks;
 
 namespace Rest.API
 {
+
+    /// <summary>
+    /// Authenticate class
+    /// To Authenticate user
+    /// </summary>
     public static class Authenticate
     {
+        /// <summary>
+        /// ValidateCredential
+        /// </summary>
+        /// <param name="req">HttpRequest</param>
+        /// <param name="log">Logger</param>
+        /// <returns>HttpResponse with bearer token </returns>
         [FunctionName("Authenticate")]
         public static async Task<IActionResult> ValidateCredential(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestMessage req,

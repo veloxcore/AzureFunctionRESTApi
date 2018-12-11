@@ -5,48 +5,91 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Rest.Data.DTO;
-using Rest.Data.Entity;
-using Rest.Data.Infrastructure;
-using Rest.Data.Repository;
-using Rest.Models;
+using Rest.Model.DTO;
+using Rest.Model.Entity;
 using Rest.Security;
+using Rest.Service;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Web.Http;
 using System.Threading.Tasks;
 using Willezone.Azure.WebJobs.Extensions.DependencyInjection;
+using Rest.Models;
+using FluentValidation;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.WindowsAzure.Storage;
+using System.IO;
+using System.Text;
+using System.Net;
+using Rest.Utils;
+using System.Collections.Specialized;
 
 namespace Rest.API
 {
+   
+    /// <summary>
+    /// Book Api to process with books
+    /// </summary>
     public static class BookApi
     {
+
+        /// <summary>
+        /// Get Books   
+        /// </summary>
+        /// <param name="req">HttpRequest</param>
+        /// <param name="bookservice">Book service</param>
+        /// <param name="metaDataService">Metadata service</param>
+        /// <param name="log">Logger</param>
+        /// <returns>books</returns>
         [FunctionName("BookGet")]
         public static async Task<IActionResult> Get(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "book")] HttpRequestMessage req,
-            [Inject]IBookRepository bookRepository,
-            ILogger log)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService,
+            ILogger logger)
         {
+            //Track Trace in application insights sample
+            var trace = new TraceTelemetry() { Message = "Book Get function and {api} Called", Timestamp = DateTime.UtcNow, SeverityLevel = SeverityLevel.Information };
+            trace.Properties.Add("function", "functionname BookGet");
+            trace.Properties.Add("{api}", "BookApi");
+            logger.TrackTraceAsync(trace);
+
             // Authentication
             if (!Authentication.ValidateToken(req.Headers.Authorization))
             {
                 return new UnauthorizedResult();
             }
+            req.AddMetaDataAsync(metaDataService);
 
-            return new OkObjectResult(await bookRepository.GetAllAsync());
+            var books = await bookservice.GetBooksAsync();
+            return new OkObjectResult(Mapper.Map<List<Book>, IEnumerable<BookDTO>>(books.ToList()));
         }
 
+        /// <summary>
+        /// To Get Book by id
+        /// </summary>
+        /// <param name="req">HttpRequestMessage with token in header </param>
+        /// <param name="bookservice">the book service</param>
+        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="id">book id which is passed in url</param>
+        /// <param name="logger">the logger</param>
+        /// <returns>Book</returns>
         [FunctionName("BookGetById")]
         public static async Task<IActionResult> GetById(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookRepository bookRepository, string id,
-            ILogger log)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id,
+            ILogger logger)
         {
             // Authentication
             if (!Authentication.ValidateToken(req.Headers.Authorization))
             {
                 return new UnauthorizedResult();
             }
+
+            req.AddMetaDataAsync(metaDataService);
 
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
@@ -54,19 +97,29 @@ namespace Rest.API
                 return new BadRequestObjectResult(new Error("400", $"Invalid book id supplied. Book id: {id}."));
             }
 
-            Data.DTO.BookDTO book = await bookRepository.GetAsync(id);
+            BookDTO book = Mapper.Map<BookDTO>(await bookservice.GetBookAsync(id));
+
             if (book == null)
             {
                 return new NotFoundObjectResult(new Error("404", $"Cannot find book with id {id}."));
             }
 
-            return new OkObjectResult(await bookRepository.GetByIDAsync(id));
+            return new OkObjectResult(book);
         }
 
+        /// <summary>
+        /// To Insert new book
+        /// </summary>
+        /// <param name="req">HttpRequestMessage with token in header and  book model object in body</param>
+        /// <param name="bookservice">the bookservice object</param>
+        /// <param name="metaDataService">the Metadata service</param>
+        /// <param name="log">the logger</param>
+        /// <param name="bookValidator">the bookValidator</param>
+        /// <returns>created result book</returns>
         [FunctionName("BookInsert")]
         public static async Task<IActionResult> Post(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "book")] HttpRequestMessage req,
-            [Inject]IBookRepository bookRepository, [Inject]IUnitOfWork unitOfWork, ILogger log)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, ILogger log, [Inject]IValidator<Book> bookValidator)
         {
             // Authentication
             if (!Authentication.ValidateToken(req.Headers.Authorization))
@@ -74,27 +127,39 @@ namespace Rest.API
                 return new UnauthorizedResult();
             }
 
-            HttpResponseBody<BookModel> body = await req.GetBodyAsync<BookModel>();
-            if (!body.IsValid)
-            {
-                return new BadRequestObjectResult($"Model is invalid: {string.Join(", ", body.ValidationResults.Select(s => s.ErrorMessage).ToArray())}");
-            }
+            req.AddMetaDataAsync(metaDataService);
 
+            HttpResponseBody<BookModel> body = await req.GetBodyAsync<BookModel>();
             // Convert DTO to Entity.
             Book entity = Mapper.Map<Book>(body.Value);
+            entity.CreatedDate = DateTime.UtcNow;
+            entity.UpdatedDate = DateTime.UtcNow;
+
+            var validationResult = bookValidator.Validate(body.Value);
+            if (!validationResult.IsValid)
+            {
+                return new BadRequestObjectResult(validationResult);
+            }
 
             // Save entity in db, can also check GUID is unique or not, because GUID is not cryptographically unique, for now it is fine.
-            bookRepository.Insert(entity);
-            await unitOfWork.SaveChangesAsync();
-
+            await bookservice.InsertBookAsync(entity);
             // If we comes here, means Success
             return new CreatedResult($"/book/{entity.BookId}", Mapper.Map<BookDTO>(entity));
         }
 
+        /// <summary>
+        /// To Delete book by id
+        /// </summary>
+        /// <param name="req">HttpRequestMessage with token in header</param>
+        /// <param name="bookservice">the book service</param>
+        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="id">book id which is passed in url</param>
+        /// <param name="log">the logger </param>
+        /// <returns>Deleted message</returns>
         [FunctionName("BookDelete")]
         public static async Task<IActionResult> Delete(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookRepository bookRepository, [Inject]IUnitOfWork unitOfWork, string id,
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id,
             ILogger log)
         {
             // Authentication
@@ -103,28 +168,38 @@ namespace Rest.API
                 return new UnauthorizedResult();
             }
 
+            req.AddMetaDataAsync(metaDataService);
+
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
             {
                 return new BadRequestObjectResult(new Error("400", $"Invalid book id supplied. Book id: {id}."));
             }
 
-            Book book = await bookRepository.GetByIDAsync(id);
+            Book book = await bookservice.GetBookAsync(id);
             if (book == null)
             {
                 return new NotFoundObjectResult(new Error("404", $"Cannot find book with id {id}."));
             }
 
-            bookRepository.Delete(book);
-            await unitOfWork.SaveChangesAsync();
-
+            await bookservice.DeleteBookAsync(id);
             return new OkObjectResult("Deleted");
         }
 
+        /// <summary>
+        /// To Update book
+        /// </summary>
+        /// <param name="req">HttpRequestMessage with token in header and patch details in body</param>
+        /// <param name="bookservice">the book service</param>
+        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="id">book id which is passed in url</param>
+        /// <param name="bookValidator">the book Validator</param>
+        /// <param name="log">the logger </param>
+        /// <returns>Updated message</returns>
         [FunctionName("BookPatch")]
         public static async Task<IActionResult> Patch(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookRepository bookRepository, [Inject]IUnitOfWork unitOfWork, string id,
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id, [Inject]IValidator<Book> bookValidator,
             ILogger log)
         {
             // Authentication
@@ -133,13 +208,15 @@ namespace Rest.API
                 return new UnauthorizedResult();
             }
 
+            req.AddMetaDataAsync(metaDataService);
+
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
             {
                 return new BadRequestObjectResult(new Error("400", $"Invalid book id supplied. Book id: {id}."));
             }
 
-            Book book = await bookRepository.GetByIDAsync(id);
+            Book book = await bookservice.GetBookAsync(id);
             if (book == null)
             {
                 return new NotFoundObjectResult(new Error("404", $"Cannot find book with id {id}."));
@@ -147,11 +224,45 @@ namespace Rest.API
 
             HttpResponseBody<JsonPatchDocument<Book>> body = await req.GetBodyAsync<JsonPatchDocument<Book>>();
             body.Value.ApplyTo(book);
+            book.UpdatedDate = DateTime.UtcNow;
 
-            bookRepository.Update(book);
-            await unitOfWork.SaveChangesAsync();
-
+            var validationResult = bookValidator.Validate(book);
+            if (!validationResult.IsValid)
+            {
+                return new BadRequestObjectResult(validationResult);
+            }
+            await bookservice.UpdateBookAsync(book);
             return new OkObjectResult("Updated");
+        }
+
+        /// <summary>
+        /// To Insert files
+        /// </summary>
+        /// <param name="req">HttpRequestMessage with token in header, header content type multipart/form-data and files in httprequest</param>
+        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="logger">the logger</param>
+        /// <param name="cloudStorageAccount">the cloudstorage account</param>
+        /// <returns>Filenames with public urls</returns>
+        [FunctionName("InsertBlob")]
+        public static async Task<IActionResult> InsertBlob(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "blob")] HttpRequestMessage req,
+            [Inject]IMetaDataService metaDataService,
+            [Inject]ILogger logger, [Inject] CloudStorageAccount cloudStorageAccount)
+        {
+            // Authentication
+            if (!Authentication.ValidateToken(req.Headers.Authorization))
+            {
+                return new UnauthorizedResult();
+            }
+
+            // Check if the request contains multipart/form-data.  
+            if (!req.Content.IsMimeMultipartContent())
+            {
+                return new BadRequestObjectResult(HttpStatusCode.UnsupportedMediaType);
+            }
+
+            Dictionary<string, string> fileUrls = await FileService.CreateBlobsAsync(req, "filestorage", cloudStorageAccount, logger);
+            return new OkObjectResult(fileUrls);
         }
     }
 }

@@ -1,3 +1,22 @@
 {
-    "version": "2.0"
+  "version": "2.0",
+  "logging": {
+    "fileLoggingMode": "always",
+    "logLevel": {
+      "default": "Information",
+      "Host.Results": "Error",
+      "Function": "Error",
+      "Host.Aggregator": "Trace"
+    },
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "maxTelemetryItemsPerSecond": 5
+      }
+    }
+  },
+  "aggregator": {
+    "batchSize": 1000,
+    "flushTimeout": "00:00:30"
+  }
 }

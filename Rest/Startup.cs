@@ -74,7 +74,7 @@ namespace Rest
                 Service.Startup.RegisterDependency(services, config);
 
                 // Important: We need to call CreateFunctionUserCategory, otherwise our log entries might be filtered out.
-                services.AddSingleton<ILogger>(_ => _loggerFactory.CreateLogger(LogCategories.CreateFunctionUserCategory("Common")));
+                //services.AddSingleton<ILogger>(_ => _loggerFactory.CreateLogger(LogCategories.CreateFunctionUserCategory("Common")));
 
                 // Configure AutoMapper
                 AutoMapper.Mapper.Initialize(cfg =>
@@ -97,7 +97,7 @@ namespace Rest
                 //Application Insights Telemetry
                 string appInsights_InstrumentationKey = config.GetValue<string>("APPINSIGHTS_INSTRUMENTATIONKEY");
                 if (appInsights_InstrumentationKey != null)
-                    LoggerExtensions.telemetry.InstrumentationKey = appInsights_InstrumentationKey;
+                    Logger.Telemetry.InstrumentationKey = appInsights_InstrumentationKey;
              
                 //Register cloudstorageAccount with connection from configuration
                 string azureWebJobsStorageConnection = config.GetValue<string>("AzureWebJobsStorage");

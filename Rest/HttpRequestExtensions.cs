@@ -60,31 +60,34 @@ namespace Rest
         /// <param name="request">HttpRequest</param>
         /// <param name="metaDataService">Metadata service</param>
         /// <returns></returns>
-        public static async Task AddMetaDataAsync(this HttpRequestMessage request, IMetaDataService metaDataService)
+        public static void AddMetaDataAsync(this HttpRequestMessage request, IMetaDataService metaDataService)
         {
-            // Dictionary<string, string> headerBlocks = new Dictionary<string, string>();
-            MetaData metadata = new MetaData();
-            metadata.TimeStamp = DateTime.UtcNow;
-            var deviceID = request.Headers.Contains("DeviceId") ? request.Headers.GetValues("DeviceId") : null;
-            if (deviceID != null)
+            Task.Run(async () =>
             {
-                deviceID = deviceID.ToList();
-                metadata.SetValue("DeviceId", deviceID.FirstOrDefault());
-            }
-            var payloadPairs = new Dictionary<string, string>();
-            foreach (string key in PayLoadKeys)
-            {
-                var value = request.Headers.Contains(key) ? request.Headers.GetValues(key) : null;
-                if (value != null)
+                // Dictionary<string, string> headerBlocks = new Dictionary<string, string>();
+                MetaData metadata = new MetaData();
+                metadata.TimeStamp = DateTime.UtcNow;
+                var deviceID = request.Headers.Contains("DeviceId") ? request.Headers.GetValues("DeviceId") : null;
+                if (deviceID != null)
                 {
-                    value = value.ToList();
-                    payloadPairs.Add(key, value.FirstOrDefault());
+                    deviceID = deviceID.ToList();
+                    metadata.SetValue("DeviceId", deviceID.FirstOrDefault());
                 }
-            }
-            if (payloadPairs.Count > 0)
-               metadata.SetValue("Payload",JsonConvert.SerializeObject(payloadPairs));
-            if (!string.IsNullOrEmpty(metadata.DeviceId))
-               await metaDataService.InsertMetaDataAsync(metadata);
+                var payloadPairs = new Dictionary<string, string>();
+                foreach (string key in PayLoadKeys)
+                {
+                    var value = request.Headers.Contains(key) ? request.Headers.GetValues(key) : null;
+                    if (value != null)
+                    {
+                        value = value.ToList();
+                        payloadPairs.Add(key, value.FirstOrDefault());
+                    }
+                }
+                if (payloadPairs.Count > 0)
+                    metadata.SetValue("Payload", JsonConvert.SerializeObject(payloadPairs));
+                if (!string.IsNullOrEmpty(metadata.DeviceId))
+                    await metaDataService.InsertMetaDataAsync(metadata);
+            });
         }
 
         /// <summary>

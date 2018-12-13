@@ -25,7 +25,7 @@ namespace Rest.Utils
         /// <param name="cloudStorageAccount">the cloud storage account</param>
         /// <param name="logger">The logger</param>
         /// <returns></returns>
-        public async static Task<Dictionary<string, string>> CreateBlobsAsync(HttpRequestMessage request, string containerName, CloudStorageAccount cloudStorageAccount, ILogger logger)
+        public async static Task<Dictionary<string, string>> CreateBlobsAsync(HttpRequestMessage request, string containerName, CloudStorageAccount cloudStorageAccount)
         {
             Dictionary<string, string> fileUrls = new Dictionary<string, string>();
             var provider = await request.Content.ReadAsMultipartAsync(new InMemoryMultipartFormDataStreamProvider());
@@ -43,7 +43,7 @@ namespace Rest.Utils
                     string name;
                     name = Guid.NewGuid().ToString("n");
                     var extension = thisFileName.Split('.').Last();
-                    string url = await FileService.CreateBlobAsync(name + "." + extension, input, fileContentType, containerName, cloudStorageAccount, logger);
+                    string url = await FileService.CreateBlobAsync(name + "." + extension, input, fileContentType, containerName, cloudStorageAccount);
                     fileUrls.Add(thisFileName, url);
                 }
             }
@@ -60,7 +60,7 @@ namespace Rest.Utils
         /// <param name="cloudStorageAccount">cloud storage account</param>
         /// <param name="logger">the logger</param>
         /// <returns>url of uploaded file</returns>
-        private async static Task<string> CreateBlobAsync(string name, Stream data, string contentType, string containerName, CloudStorageAccount cloudStorageAccount, ILogger logger)
+        private async static Task<string> CreateBlobAsync(string name, Stream data, string contentType, string containerName, CloudStorageAccount cloudStorageAccount)
         {
             CloudBlobClient client;
             CloudBlobContainer container;

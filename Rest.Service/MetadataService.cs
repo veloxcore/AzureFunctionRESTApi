@@ -20,14 +20,14 @@ namespace Rest.Service
         {
             _metaDataRepository = metaDataRepository;
         }
-        public async Task<IEnumerable<MetaData>> GetMetaDataAsync()
+        public Task<IEnumerable<MetaData>> GetMetaDataAsync()
         {
-            return await _metaDataRepository.GetAllAsync();
+            return _metaDataRepository.GetAllAsync();
         }
 
-        public async Task InsertMetaDataAsync(MetaData metaData)
+        public Task InsertMetaDataAsync(MetaData metaData)
         {
-            await _metaDataRepository.InsertAsync(metaData);
+            return _metaDataRepository.InsertAsync(metaData);
         }
     }
 }

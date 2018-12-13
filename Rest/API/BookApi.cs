@@ -30,13 +30,12 @@ using System.Collections.Specialized;
 
 namespace Rest.API
 {
-   
     /// <summary>
     /// Book Api to process with books
     /// </summary>
+    [LogInterceptor]
     public static class BookApi
     {
-
         /// <summary>
         /// Get Books   
         /// </summary>
@@ -46,24 +45,17 @@ namespace Rest.API
         /// <param name="log">Logger</param>
         /// <returns>books</returns>
         [FunctionName("BookGet")]
+        [CustomAuthorize]
         public static async Task<IActionResult> Get(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "book")] HttpRequestMessage req,
-            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService,
-            ILogger logger)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService)
         {
             //Track Trace in application insights sample
             var trace = new TraceTelemetry() { Message = "Book Get function and {api} Called", Timestamp = DateTime.UtcNow, SeverityLevel = SeverityLevel.Information };
             trace.Properties.Add("function", "functionname BookGet");
             trace.Properties.Add("{api}", "BookApi");
-            logger.TrackTraceAsync(trace);
-
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-            req.AddMetaDataAsync(metaDataService);
-
+            Logger.TrackTrace(trace);
+            
             var books = await bookservice.GetBooksAsync();
             return new OkObjectResult(Mapper.Map<List<Book>, IEnumerable<BookDTO>>(books.ToList()));
         }
@@ -78,19 +70,11 @@ namespace Rest.API
         /// <param name="logger">the logger</param>
         /// <returns>Book</returns>
         [FunctionName("BookGetById")]
+        [CustomAuthorize]
         public static async Task<IActionResult> GetById(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id,
-            ILogger logger)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id)
         {
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-
-            req.AddMetaDataAsync(metaDataService);
-
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
             {
@@ -117,18 +101,11 @@ namespace Rest.API
         /// <param name="bookValidator">the bookValidator</param>
         /// <returns>created result book</returns>
         [FunctionName("BookInsert")]
+        [CustomAuthorize]
         public static async Task<IActionResult> Post(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "book")] HttpRequestMessage req,
-            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, ILogger log, [Inject]IValidator<Book> bookValidator)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, [Inject]IValidator<Book> bookValidator)
         {
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-
-            req.AddMetaDataAsync(metaDataService);
-
             HttpResponseBody<BookModel> body = await req.GetBodyAsync<BookModel>();
             // Convert DTO to Entity.
             Book entity = Mapper.Map<Book>(body.Value);
@@ -157,19 +134,11 @@ namespace Rest.API
         /// <param name="log">the logger </param>
         /// <returns>Deleted message</returns>
         [FunctionName("BookDelete")]
+        [CustomAuthorize]
         public static async Task<IActionResult> Delete(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id,
-            ILogger log)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id)
         {
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-
-            req.AddMetaDataAsync(metaDataService);
-
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
             {
@@ -197,19 +166,11 @@ namespace Rest.API
         /// <param name="log">the logger </param>
         /// <returns>Updated message</returns>
         [FunctionName("BookPatch")]
+        [CustomAuthorize]
         public static async Task<IActionResult> Patch(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "book/{id}")] HttpRequestMessage req,
-            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id, [Inject]IValidator<Book> bookValidator,
-            ILogger log)
+            [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService, string id, [Inject]IValidator<Book> bookValidator)
         {
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-
-            req.AddMetaDataAsync(metaDataService);
-
             Guid bookUniqueIdentifier;
             if (!Guid.TryParse(id, out bookUniqueIdentifier))
             {
@@ -244,24 +205,19 @@ namespace Rest.API
         /// <param name="cloudStorageAccount">the cloudstorage account</param>
         /// <returns>Filenames with public urls</returns>
         [FunctionName("InsertBlob")]
+        [CustomAuthorize]
         public static async Task<IActionResult> InsertBlob(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "blob")] HttpRequestMessage req,
             [Inject]IMetaDataService metaDataService,
-            [Inject]ILogger logger, [Inject] CloudStorageAccount cloudStorageAccount)
+            [Inject] CloudStorageAccount cloudStorageAccount)
         {
-            // Authentication
-            if (!Authentication.ValidateToken(req.Headers.Authorization))
-            {
-                return new UnauthorizedResult();
-            }
-
             // Check if the request contains multipart/form-data.  
             if (!req.Content.IsMimeMultipartContent())
             {
                 return new BadRequestObjectResult(HttpStatusCode.UnsupportedMediaType);
             }
 
-            Dictionary<string, string> fileUrls = await FileService.CreateBlobsAsync(req, "filestorage", cloudStorageAccount, logger);
+            Dictionary<string, string> fileUrls = await FileService.CreateBlobsAsync(req, "filestorage", cloudStorageAccount);
             return new OkObjectResult(fileUrls);
         }
     }

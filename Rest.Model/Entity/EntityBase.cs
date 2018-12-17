@@ -5,7 +5,7 @@ using System.Text;
 namespace Rest.Model.Entity
 {
     /// <summary>
-    /// Base class for table entity
+    /// Base class for entity
     /// </summary>
     public abstract class EntityBase
     {

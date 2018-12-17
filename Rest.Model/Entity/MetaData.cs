@@ -40,7 +40,7 @@ namespace Rest.Model.Entity
         /// Get or sets value
         /// </summary>
         /// <value>
-        /// Payload - Information from header with keys that are exist in local settings json file named PayloadKeys
+        /// Payload - Header information as json of key value pairs
         /// </value>
         public string Payload { get; set; }
 

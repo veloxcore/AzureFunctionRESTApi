@@ -13,7 +13,7 @@ namespace Rest.Models
         /// Gets or sets the name.
         /// </summary>
         /// <value>
-        /// The name.
+        /// The name with max length 250
         /// </value>
         [Required]
         [StringLength(250)]
@@ -36,7 +36,7 @@ namespace Rest.Models
         /// Gets or sets the authors.
         /// </summary>
         /// <value>
-        /// The authors.
+        /// The authors array.
         /// </value>
         public string[] Authors { get; set; }
     }

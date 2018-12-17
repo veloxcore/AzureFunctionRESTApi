@@ -33,42 +33,35 @@ namespace Rest.API
     /// <summary>
     /// Book Api to process with books
     /// </summary>
+    /// LogInterceptor custom attribute to enter logs
     [LogInterceptor]
     public static class BookApi
     {
         /// <summary>
-        /// Get Books   
+        /// Get: Get all books with data  
         /// </summary>
-        /// <param name="req">HttpRequest</param>
-        /// <param name="bookservice">Book service</param>
-        /// <param name="metaDataService">Metadata service</param>
-        /// <param name="log">Logger</param>
-        /// <returns>books</returns>
+        /// <param name="req">HttpRequest with header information and token of authorized user</param>
+        /// <param name="bookservice">Book service object to process with book data</param>
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
+        /// <returns>books data or return unauthorized if token is not valid</returns>
         [FunctionName("BookGet")]
         [CustomAuthorize]
         public static async Task<IActionResult> Get(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "book")] HttpRequestMessage req,
             [Inject]IBookService bookservice, [Inject]IMetaDataService metaDataService)
         {
-            //Track Trace in application insights sample
-            var trace = new TraceTelemetry() { Message = "Book Get function and {api} Called", Timestamp = DateTime.UtcNow, SeverityLevel = SeverityLevel.Information };
-            trace.Properties.Add("function", "functionname BookGet");
-            trace.Properties.Add("{api}", "BookApi");
-            Logger.TrackTrace(trace);
-            
             var books = await bookservice.GetBooksAsync();
             return new OkObjectResult(Mapper.Map<List<Book>, IEnumerable<BookDTO>>(books.ToList()));
         }
 
         /// <summary>
-        /// To Get Book by id
+        /// GetById: Get Book information by id of book
         /// </summary>
-        /// <param name="req">HttpRequestMessage with token in header </param>
-        /// <param name="bookservice">the book service</param>
-        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="req">HttpRequest with header information and token of authorized user</param>
+        /// <param name="bookservice">Book service object to process with book data</param>
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
         /// <param name="id">book id which is passed in url</param>
-        /// <param name="logger">the logger</param>
-        /// <returns>Book</returns>
+        /// <returns>Book data with information</returns>
         [FunctionName("BookGetById")]
         [CustomAuthorize]
         public static async Task<IActionResult> GetById(
@@ -92,14 +85,13 @@ namespace Rest.API
         }
 
         /// <summary>
-        /// To Insert new book
+        /// Post: To Insert new book
         /// </summary>
-        /// <param name="req">HttpRequestMessage with token in header and  book model object in body</param>
-        /// <param name="bookservice">the bookservice object</param>
-        /// <param name="metaDataService">the Metadata service</param>
-        /// <param name="log">the logger</param>
-        /// <param name="bookValidator">the bookValidator</param>
-        /// <returns>created result book</returns>
+        /// <param name="req">HttpRequest with header information, token of authorized user and book model data in body</param>
+        /// <param name="bookservice">Book service object to process with book data</param>
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
+        /// <param name="bookValidator">the bookValidator to validate book data - FluentValidation</param>
+        /// <returns>Created book or badrequest if invalid data supplied</returns>
         [FunctionName("BookInsert")]
         [CustomAuthorize]
         public static async Task<IActionResult> Post(
@@ -125,14 +117,13 @@ namespace Rest.API
         }
 
         /// <summary>
-        /// To Delete book by id
+        /// Delete: To Delete book by id
         /// </summary>
-        /// <param name="req">HttpRequestMessage with token in header</param>
-        /// <param name="bookservice">the book service</param>
-        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="req">HttpRequest with header information and token of authorized user</param>
+        /// <param name="bookservice">Book service object to process with book data</param>
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
         /// <param name="id">book id which is passed in url</param>
-        /// <param name="log">the logger </param>
-        /// <returns>Deleted message</returns>
+        /// <returns>Deleted message or not found if book not found with supplied id or invalid Id if supplied id is not in correct format</returns>
         [FunctionName("BookDelete")]
         [CustomAuthorize]
         public static async Task<IActionResult> Delete(
@@ -156,15 +147,14 @@ namespace Rest.API
         }
 
         /// <summary>
-        /// To Update book
+        /// Patch: To Update book
         /// </summary>
         /// <param name="req">HttpRequestMessage with token in header and patch details in body</param>
-        /// <param name="bookservice">the book service</param>
-        /// <param name="metaDataService">the metadata service</param>
+        /// <param name="bookservice">Book service object to process with book data</param>
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
         /// <param name="id">book id which is passed in url</param>
-        /// <param name="bookValidator">the book Validator</param>
-        /// <param name="log">the logger </param>
-        /// <returns>Updated message</returns>
+        /// <param name="bookValidator">the book Validator to validate book : fluentvalidation</param> 
+        /// <returns>Updated message or badrequest if invalid data supplied or not found if book not found with supplied id</returns>
         [FunctionName("BookPatch")]
         [CustomAuthorize]
         public static async Task<IActionResult> Patch(
@@ -197,17 +187,16 @@ namespace Rest.API
         }
 
         /// <summary>
-        /// To Insert files
+        /// InsertBlob: To Insert single or multiple files with different extensions 
         /// </summary>
         /// <param name="req">HttpRequestMessage with token in header, header content type multipart/form-data and files in httprequest</param>
-        /// <param name="metaDataService">the metadata service</param>
-        /// <param name="logger">the logger</param>
-        /// <param name="cloudStorageAccount">the cloudstorage account</param>
-        /// <returns>Filenames with public urls</returns>
-        [FunctionName("InsertBlob")]
+        /// <param name="metaDataService">Metadata service to process with metadata from header</param>
+        /// <param name="cloudStorageAccount">the azure cloudstorage account to store uploaded files</param>
+        /// <returns>Filenames with public urls if success or badrequest if invalid request</returns>
+        [FunctionName("InsertFiles")]
         [CustomAuthorize]
-        public static async Task<IActionResult> InsertBlob(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "blob")] HttpRequestMessage req,
+        public static async Task<IActionResult> InsertFiles(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "Files")] HttpRequestMessage req,
             [Inject]IMetaDataService metaDataService,
             [Inject] CloudStorageAccount cloudStorageAccount)
         {
@@ -217,6 +206,10 @@ namespace Rest.API
                 return new BadRequestObjectResult(HttpStatusCode.UnsupportedMediaType);
             }
 
+            //Fileurls: Key as uploaded 
+            //1.req with files in body , 
+            //2."filestorge" is containername to save files in cloudstorageaccount
+            //3.cloudStorageAccount" is AzureWebstorageAccount with key
             Dictionary<string, string> fileUrls = await FileService.CreateBlobsAsync(req, "filestorage", cloudStorageAccount);
             return new OkObjectResult(fileUrls);
         }

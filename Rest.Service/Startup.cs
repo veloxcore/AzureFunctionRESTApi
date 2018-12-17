@@ -18,6 +18,7 @@ namespace Rest.Service
         /// <param name="configuration">The configuration.</param>
         public static void RegisterDependency(IServiceCollection services, IConfiguration configuration)
         {
+            //Register Rest.Data dependency
             Rest.Data.Startup.RegisterDependency(services, configuration);
 
             // Register all services

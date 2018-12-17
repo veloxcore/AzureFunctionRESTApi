@@ -73,9 +73,6 @@ namespace Rest
                 ///Register Dependency of services
                 Service.Startup.RegisterDependency(services, config);
 
-                // Important: We need to call CreateFunctionUserCategory, otherwise our log entries might be filtered out.
-                //services.AddSingleton<ILogger>(_ => _loggerFactory.CreateLogger(LogCategories.CreateFunctionUserCategory("Common")));
-
                 // Configure AutoMapper
                 AutoMapper.Mapper.Initialize(cfg =>
                 {
@@ -90,11 +87,11 @@ namespace Rest
                         .ForMember(o => o.Authors, o => o.MapFrom((a, b) => a.Authors.Split(',')));
                 });
 
-                //FulentValidation
+                //FulentValidation register to validate models when require
                 services.AddMvc().AddFluentValidation();
                 services.AddTransient<IValidator<Book>, BookValidator>();
 
-                //Application Insights Telemetry
+                //Application Insights Telemetry assign key from configuration
                 string appInsights_InstrumentationKey = config.GetValue<string>("APPINSIGHTS_INSTRUMENTATIONKEY");
                 if (appInsights_InstrumentationKey != null)
                     Logger.Telemetry.InstrumentationKey = appInsights_InstrumentationKey;

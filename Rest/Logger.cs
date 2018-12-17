@@ -1,11 +1,6 @@
 ﻿
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rest
 {
@@ -20,18 +15,19 @@ namespace Rest
         public static readonly TelemetryClient Telemetry = new TelemetryClient();
 
         /// <summary>
-        /// Track Request in application insights
+        /// Track Request in application insights, Supply user id,device id and Ip if details are exists
         /// </summary>
         /// <param name="logger">Logger</param>
         /// <param name="requestTelemetry">Request Telemtry object</param>
         /// <param name="userid">user id </param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackRequest(RequestTelemetry requestTelemetry, string userid = null, string deviceId = null)
+        public static void TrackRequest(RequestTelemetry requestTelemetry, string userid = null, string deviceId = null,string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackRequest(requestTelemetry);
         }
 
@@ -42,12 +38,13 @@ namespace Rest
         /// <param name="exceptionTelemetry">Exception Telemetry</param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackException(ExceptionTelemetry exceptionTelemetry, string userid = null, string deviceId = null)
+        public static void TrackException(ExceptionTelemetry exceptionTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackException(exceptionTelemetry);
         }
 
@@ -58,12 +55,13 @@ namespace Rest
         /// <param name="traceTelemetry">Tracetelemetry object</param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackTrace(TraceTelemetry traceTelemetry, string userid = null, string deviceId = null)
+        public static void TrackTrace(TraceTelemetry traceTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackTrace(traceTelemetry);
         }
 
@@ -74,12 +72,13 @@ namespace Rest
         /// <param name="eventTelemetry"></param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackEvent(EventTelemetry eventTelemetry, string userid = null, string deviceId = null)
+        public static void TrackEvent(EventTelemetry eventTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackEvent(eventTelemetry);
         }
 
@@ -90,12 +89,13 @@ namespace Rest
         /// <param name="metricTelemetry"></param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackMetric(MetricTelemetry metricTelemetry, string userid = null, string deviceId = null)
+        public static void TrackMetric(MetricTelemetry metricTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackMetric(metricTelemetry);
         }
 
@@ -106,12 +106,13 @@ namespace Rest
         /// <param name="dependencyTelemetry"></param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackDependancy(DependencyTelemetry dependencyTelemetry, string userid = null, string deviceId = null)
+        public static void TrackDependancy(DependencyTelemetry dependencyTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackDependency(dependencyTelemetry);
         }
 
@@ -122,12 +123,13 @@ namespace Rest
         /// <param name="availabilityTelemetry">Availability Telemetry object</param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackAvailability(AvailabilityTelemetry availabilityTelemetry, string userid = null, string deviceId = null)
+        public static void TrackAvailability(AvailabilityTelemetry availabilityTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackAvailability(availabilityTelemetry);
         }
 
@@ -138,12 +140,13 @@ namespace Rest
         /// <param name="pageViewTelemetry">Pageview telemetry object</param>
         /// <param name="userid">user id</param>
         /// <param name="deviceId">device id</param>
+        /// <param name="Ip">Ip of device from where request arrived</param>
         /// <returns></returns>
-        public static void TrackPageView(PageViewTelemetry pageViewTelemetry, string userid = null, string deviceId = null)
+        public static void TrackPageView(PageViewTelemetry pageViewTelemetry, string userid = null, string deviceId = null, string Ip = null)
         {
             Telemetry.Context.User.Id = userid ?? string.Empty;
             Telemetry.Context.Device.Id = deviceId ?? string.Empty;
-            Telemetry.Context.Location.Ip = deviceId ?? string.Empty;
+            Telemetry.Context.Location.Ip = Ip ?? string.Empty;
             Telemetry.TrackPageView(pageViewTelemetry);
         }
     }

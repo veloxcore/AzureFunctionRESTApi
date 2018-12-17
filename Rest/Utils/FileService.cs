@@ -18,13 +18,13 @@ namespace Rest.Utils
     public static class FileService
     {
         /// <summary>
-        /// To create blobs from httprequest with multipart form data with files
+        /// CreateBlobsAsyncL: To create blobs from httprequest with multipart form data with files,
+        /// It gets files from HttpRequestMessage and insert files in to azure web storage
         /// </summary>
-        /// <param name="request"> httprequest with conent type multipart/form-data and files in body</param>
-        /// <param name="containerName">container name in which file to be store in azure web storage</param>
-        /// <param name="cloudStorageAccount">the cloud storage account</param>
-        /// <param name="logger">The logger</param>
-        /// <returns></returns>
+        /// <param name="request"> httprequest with conent type multipart/form-data files in body</param>
+        /// <param name="containerName">container name in which file to be store in azure web storage (it will create new if not exist but containername should be in small letters only)</param>
+        /// <param name="cloudStorageAccount">the azure cloud storage account where uploaded files will be stored</param>
+        /// <returns>List of uploaded urls with file names</returns>
         public async static Task<Dictionary<string, string>> CreateBlobsAsync(HttpRequestMessage request, string containerName, CloudStorageAccount cloudStorageAccount)
         {
             Dictionary<string, string> fileUrls = new Dictionary<string, string>();
@@ -51,14 +51,13 @@ namespace Rest.Utils
         }
 
         /// <summary>
-        /// To Insert files
+        /// CreateBlob - To insert file in webstorage 
         /// </summary>
-        /// <param name="name">Filename</param>
-        /// <param name="data">the file data</param>
+        /// <param name="name">New generated filename</param>
+        /// <param name="data">the file data supplied in request</param>
         /// <param name="contentType">content type of file</param>
         /// <param name="containerName">container name of file to be stored in azure web storage (small letters only)</param>
-        /// <param name="cloudStorageAccount">cloud storage account</param>
-        /// <param name="logger">the logger</param>
+        /// <param name="cloudStorageAccount">azure cloud storage account</param>
         /// <returns>url of uploaded file</returns>
         private async static Task<string> CreateBlobAsync(string name, Stream data, string contentType, string containerName, CloudStorageAccount cloudStorageAccount)
         {

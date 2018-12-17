@@ -36,6 +36,10 @@ namespace Rest.Data.Repository
     /// </summary>
     public class MetaDataRepository : Repository<MetaData>, IMetaDataRepository
     {
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="dbQueryProcessor">DbQueryProcessor to assign in base class constructor</param>
         public MetaDataRepository(IDbQueryProcessor dbQueryProcessor) : base(dbQueryProcessor)
         {
         }
@@ -66,6 +70,11 @@ namespace Rest.Data.Repository
             await ProcessCommandAsync("InsertMetaData", parameter);
         }
 
+        /// <summary>
+        /// Get Key from metadata object
+        /// </summary>
+        /// <param name="metaData">metadata</param>
+        /// <returns>object key</returns>
         protected override object[] GetKey(MetaData metaData)
         {
             return new object[] { metaData.Id };

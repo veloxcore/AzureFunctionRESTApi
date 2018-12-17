@@ -15,7 +15,7 @@ using Rest.Data;
 namespace Rest.Data.Repository
 {
     /// <summary>
-    /// Book Repository
+    /// Book Repository to process with book table of database
     /// </summary>
     public interface IBookRepository
     {
@@ -59,7 +59,10 @@ namespace Rest.Data.Repository
     /// </summary>
     public class BookRepository : Repository<Book>, IBookRepository
     {
-
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="dbQueryProcessor">DbQueryProcessor to assign in base class constructor</param>
         public BookRepository(IDbQueryProcessor dbQueryProcessor) : base(dbQueryProcessor)
         {
         }

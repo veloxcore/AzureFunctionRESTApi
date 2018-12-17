@@ -14,21 +14,18 @@ namespace Rest.API
 {
 
     /// <summary>
-    /// Authenticate class
-    /// To Authenticate user
+    /// Authenticate class to authenticate user
     /// </summary>
     public static class Authenticate
     {
         /// <summary>
-        /// ValidateCredential
+        /// ValidateCredential - It validates username and password and return user bearer token to access other functions or unauthorized if not validated
         /// </summary>
-        /// <param name="req">HttpRequest</param>
-        /// <param name="log">Logger</param>
-        /// <returns>HttpResponse with bearer token </returns>
+        /// <param name="req">HttpRequest with basic authorization : username and password</param>
+        /// <returns>HttpResponse with bearer token if user validated or unauthorized request if not validate</returns>
         [FunctionName("Authenticate")]
         public static async Task<IActionResult> ValidateCredential(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestMessage req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestMessage req)
         {
             if (req.Headers.Authorization.Scheme.StartsWith("Basic"))
             {

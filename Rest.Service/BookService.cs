@@ -11,7 +11,7 @@ using Rest.Data.Infrastructure;
 namespace Rest.Service
 {
     /// <summary>
-    /// Book Service to work with processes of book data
+    /// Book Service to process with book repository for data operations
     /// </summary>
     public interface IBookService
     {
@@ -27,7 +27,6 @@ namespace Rest.Service
         /// <param name="bookId">ID of Book</param>
         /// <returns>Book</returns>
         Task<Book> GetBookAsync(string bookId);
-
 
         /// <summary>
         /// Delete Book

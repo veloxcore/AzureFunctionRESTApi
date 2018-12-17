@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Rest.Security
 {
     /// <summary>
-    /// Authentication to processes related to user authentications
+    /// Authentication: To processes related to user authentications
     /// </summary>
     public static class Authentication
     {
@@ -23,7 +23,7 @@ namespace Rest.Security
         /// <summary>
         /// Generate Token
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Return new created token</returns>
         public static string GenerateJWT()
         {
             return new JwtBuilder()

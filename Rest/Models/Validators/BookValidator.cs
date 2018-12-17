@@ -7,12 +7,13 @@ using System.Text;
 namespace Rest.Models.Validators
 {
     /// <summary>
-    /// Book Validator
+    /// Book Validator using fluent validation
+    /// It will Validate book properties where it is called as per the validation rules defined below
     /// </summary>
     public class BookValidator : AbstractValidator<Book>
     {
         /// <summary>
-        /// Book Validator
+        /// Book Validator constructor
         /// </summary>
         public BookValidator()
         {
